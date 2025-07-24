@@ -5,7 +5,7 @@ on:
 
 jobs:
   docker:
-    runs-on: default
+    runs-on: ubuntu-latest
     steps:
       -
         name: Checkout
