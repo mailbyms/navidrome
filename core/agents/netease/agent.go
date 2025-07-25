@@ -46,6 +46,11 @@ func (n *neteaseAgent) AgentName() string {
 
 // AlbumInfoRetriever interface implementation
 func (n *neteaseAgent) GetAlbumInfo(ctx context.Context, name, artist, mbid string) (*agents.AlbumInfo, error) {
+	log.Debug(ctx, "Getting album info from Netease, ignore", "album", name, "artist", artist)
+	return nil, agents.ErrNotFound
+}
+
+func (n *neteaseAgent) GetAlbumInfo_bak(ctx context.Context, name, artist, mbid string) (*agents.AlbumInfo, error) {
 	log.Debug(ctx, "Getting album info from Netease", "album", name, "artist", artist)
 
 	album, err := n.callAlbumSearch(ctx, name, artist)

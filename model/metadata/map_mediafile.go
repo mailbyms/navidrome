@@ -59,6 +59,27 @@ func (md Metadata) ToMediaFile(libID int, folderID string) model.MediaFile {
 
 	// General properties
 	mf.HasCoverArt = md.HasPicture()
+
+	// Enhanced logging for cover art detection
+	coverArtType := md.String("_cover_art_type")
+	coverArtCount := md.String("_cover_art_count")
+	coverArtDetected := md.String("_cover_art_detected")
+
+	if mf.HasCoverArt {
+		log.Debug("Scanner: Found embedded cover art",
+			"file", md.FilePath(),
+			"hasCoverArt", mf.HasCoverArt,
+			"fileType", coverArtType,
+			"coverCount", coverArtCount,
+			"detected", coverArtDetected)
+	} else {
+		log.Debug("Scanner: No embedded cover art found",
+			"file", md.FilePath(),
+			"hasCoverArt", mf.HasCoverArt,
+			"fileType", coverArtType,
+			"detected", coverArtDetected)
+	}
+
 	mf.Duration = md.Length()
 	mf.BitRate = md.AudioProperties().BitRate
 	mf.SampleRate = md.AudioProperties().SampleRate
