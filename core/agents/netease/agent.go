@@ -107,6 +107,7 @@ func (n *neteaseAgent) GetArtistBiography(ctx context.Context, id, name, mbid st
 	// First, search for the artist to get their ID
 	artist, err := n.callArtistSearch(ctx, name)
 	if err != nil {
+		log.Error(ctx, "callArtistSearch return error", "id", id, "name", name, "err", err)
 		return "", err
 	}
 
@@ -114,6 +115,7 @@ func (n *neteaseAgent) GetArtistBiography(ctx context.Context, id, name, mbid st
 	artistID := fmt.Sprintf("%d", artist.ID)
 	detail, err := n.callArtistDetail(ctx, artistID)
 	if err != nil {
+		log.Error(ctx, "callArtistDetail return error", "artistID", artistID, "name", name, "err", err)
 		return "", err
 	}
 

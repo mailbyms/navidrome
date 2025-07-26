@@ -10,30 +10,30 @@ type BaseResponse struct {
 type Artist struct {
 	ID          int64    `json:"id"`
 	Name        string   `json:"name"`
-	PicURL      string   `json:"picUrl"`
+	PicURL      string   `json:"picUrl"` // 图片链接
 	Alias       []string `json:"alias"`
 	AlbumSize   int      `json:"albumSize"`
 	PicID       int64    `json:"picId"`
-	FansGroup   *string  `json:"fansGroup"`
-	Img1v1URL   string   `json:"img1v1Url"`
+	// FansGroup   *string  `json:"fansGroup"`
+	Img1v1URL   string   `json:"img1v1Url"`  // 方形图片
 	Img1v1      int64    `json:"img1v1"`
 	MVSize      int      `json:"mvSize"`
-	Followed    bool     `json:"followed"`
-	Alg         string   `json:"alg"`
-	Trans       *string  `json:"trans"`
-	BriefDesc   string   `json:"briefDesc,omitempty"`
-	MusicSize   int      `json:"musicSize,omitempty"`
-	TopicPerson int      `json:"topicPerson,omitempty"`
+	// Followed    bool     `json:"followed"`
+	// Alg         string   `json:"alg"`
+	// Trans       *string  `json:"trans"`
+	// BriefDesc   string   `json:"briefDesc,omitempty"`
+	// MusicSize   int      `json:"musicSize,omitempty"`
+	// TopicPerson int      `json:"topicPerson,omitempty"`
 }
 
 // ArtistDetail represents detailed artist information from /artist/detail
 type ArtistDetail struct {
-	VideoCount int `json:"videoCount"`
-	Identify   struct {
-		ImageURL  *string `json:"imageUrl"`
-		ImageDesc string  `json:"imageDesc"`
-		ActionURL string  `json:"actionUrl"`
-	} `json:"identify"`
+	// VideoCount int `json:"videoCount"`
+	// Identify   struct {
+	// 	ImageURL  *string `json:"imageUrl"`
+	// 	ImageDesc string  `json:"imageDesc"`
+	// 	ActionURL string  `json:"actionUrl"`
+	// } `json:"identify"`
 	Artist struct {
 		ID          int64    `json:"id"`
 		Cover       string   `json:"cover"`
@@ -42,24 +42,24 @@ type ArtistDetail struct {
 		TransNames  []string `json:"transNames"`
 		Alias       []string `json:"alias"`
 		Identities  []string `json:"identities"`
-		IdentifyTag *string  `json:"identifyTag"`
+		//IdentifyTag []string  `json:"identifyTag"`
 		BriefDesc   string   `json:"briefDesc"`
-		Rank        struct {
-			Rank int `json:"rank"`
-			Type int `json:"type"`
-		} `json:"rank"`
+		// Rank        struct {
+		// 	Rank int `json:"rank"`
+		// 	Type int `json:"type"`
+		// } `json:"rank"`
 		AlbumSize int `json:"albumSize"`
 		MusicSize int `json:"musicSize"`
 		MVSize    int `json:"mvSize"`
 	} `json:"artist"`
-	Blacklist              bool `json:"blacklist"`
-	PreferShow             int  `json:"preferShow"`
-	ShowPriMsg             bool `json:"showPriMsg"`
-	SecondaryExpertIdentiy []struct {
-		ExpertIdentiyID    int    `json:"expertIdentiyId"`
-		ExpertIdentiyName  string `json:"expertIdentiyName"`
-		ExpertIdentiyCount int    `json:"expertIdentiyCount"`
-	} `json:"secondaryExpertIdentiy"`
+	// Blacklist              bool `json:"blacklist"`
+	// PreferShow             int  `json:"preferShow"`
+	// ShowPriMsg             bool `json:"showPriMsg"`
+	// SecondaryExpertIdentiy []struct {
+	// 	ExpertIdentiyID    int    `json:"expertIdentiyId"`
+	// 	ExpertIdentiyName  string `json:"expertIdentiyName"`
+	// 	ExpertIdentiyCount int    `json:"expertIdentiyCount"`
+	// } `json:"secondaryExpertIdentiy"`
 }
 
 // ArtistDetailResponse represents the response from /artist/detail
