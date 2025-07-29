@@ -187,6 +187,10 @@ var (
 	instanceTranscodingCache TranscodingCache
 )
 
+// 用于限制每个token只能有一个转码任务
+var transcodeTaskMap = make(map[string]io.Closer)
+var transcodeTaskLock sync.Mutex
+
 func GetTranscodingCache() TranscodingCache {
 	onceTranscodingCache.Do(func() {
 		instanceTranscodingCache = NewTranscodingCache()
@@ -199,6 +203,23 @@ func NewTranscodingCache() TranscodingCache {
 		consts.TranscodingCacheDir, consts.DefaultTranscodingCacheMaxItems,
 		func(ctx context.Context, arg cache.Item) (io.Reader, error) {
 			job := arg.(*streamJob)
+			// 从ctx获取token参数
+			token := ""
+			if v := ctx.Value("token"); v != nil {
+				token, _ = v.(string)
+			}
+			// 打印出 token
+			log.Debug(ctx, "Transcoding job started.", "token", token)
+			if token != "" {
+				transcodeTaskLock.Lock()
+				// 如果有旧的任务，先关闭它
+				if oldTask, ok := transcodeTaskMap[token]; ok {
+					log.Debug(ctx, "Stopping old transcoding task", "oldTask", oldTask)
+					oldTask.Close()
+					delete(transcodeTaskMap, token)
+				}
+				transcodeTaskLock.Unlock()
+			}
 			t, err := job.ms.ds.Transcoding(ctx).FindByFormat(job.format)
 			if err != nil {
 				log.Error(ctx, "Error loading transcoding command", "format", job.format, err)
@@ -208,6 +229,14 @@ func NewTranscodingCache() TranscodingCache {
 			if err != nil {
 				log.Error(ctx, "Error starting transcoder", "id", job.mf.ID, err)
 				return nil, os.ErrInvalid
+			}
+			// 如果有token，保存到转码任务map中
+			if token != "" {
+				if closer, ok := out.(io.Closer); ok {
+					transcodeTaskLock.Lock()
+					transcodeTaskMap[token] = closer
+					transcodeTaskLock.Unlock()
+				}
 			}
 			return out, nil
 		})

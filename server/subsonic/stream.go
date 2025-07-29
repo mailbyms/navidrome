@@ -56,6 +56,9 @@ func (api *Router) Stream(w http.ResponseWriter, r *http.Request) (*responses.Su
 	if err != nil {
 		return nil, err
 	}
+	// 保存 token 到上下文中，后面用来限制单个token的转码并发数
+	token, _ := p.String("t")
+	ctx = context.WithValue(ctx, "token", token)
 	maxBitRate := p.IntOr("maxBitRate", 0)
 	format, _ := p.String("format")
 	timeOffset := p.IntOr("timeOffset", 0)
