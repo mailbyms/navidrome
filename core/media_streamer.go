@@ -191,6 +191,25 @@ var (
 var transcodeTaskMap = make(map[string]io.Closer)
 var transcodeTaskLock sync.Mutex
 
+// cleaningCloser is a wrapper around an io.Closer that will remove the transcoding task from the map when closed.
+type cleaningCloser struct {
+	io.Closer
+	token string
+}
+
+// Close closes the underlying closer and removes the task from the map.
+func (cc *cleaningCloser) Close() error {
+	err := cc.Closer.Close()
+	transcodeTaskLock.Lock()
+	// To prevent race conditions, only delete the task if it's the one we think it is.
+	if task, ok := transcodeTaskMap[cc.token]; ok && task == cc {
+		log.Debug("Deleting transcoding task from map", "token", cc.token)
+		delete(transcodeTaskMap, cc.token)
+	}
+	transcodeTaskLock.Unlock()
+	return err
+}
+
 func GetTranscodingCache() TranscodingCache {
 	onceTranscodingCache.Do(func() {
 		instanceTranscodingCache = NewTranscodingCache()
@@ -210,16 +229,7 @@ func NewTranscodingCache() TranscodingCache {
 			}
 			// 打印出 token
 			log.Debug(ctx, "Transcoding job started.", "token", token)
-			if token != "" {
-				transcodeTaskLock.Lock()
-				// 如果有旧的任务，先关闭它
-				if oldTask, ok := transcodeTaskMap[token]; ok {
-					log.Debug(ctx, "Stopping old transcoding task", "oldTask", oldTask)
-					oldTask.Close()
-					delete(transcodeTaskMap, token)
-				}
-				transcodeTaskLock.Unlock()
-			}
+
 			t, err := job.ms.ds.Transcoding(ctx).FindByFormat(job.format)
 			if err != nil {
 				log.Error(ctx, "Error loading transcoding command", "format", job.format, err)
@@ -232,10 +242,15 @@ func NewTranscodingCache() TranscodingCache {
 			}
 			// 如果有token，保存到转码任务map中
 			if token != "" {
-				if closer, ok := out.(io.Closer); ok {
-					transcodeTaskLock.Lock()
-					transcodeTaskMap[token] = closer
-					transcodeTaskLock.Unlock()
+				transcodeTaskLock.Lock()
+				// 如果有旧的任务，先关闭它
+				oldTask, hasOld := transcodeTaskMap[token]
+				transcodeTaskMap[token] = &cleaningCloser{Closer: out, token: token}
+				transcodeTaskLock.Unlock()
+
+				if hasOld {
+					log.Debug(ctx, "Stopping old transcoding task", "oldTask", oldTask)
+					oldTask.Close()
 				}
 			}
 			return out, nil
