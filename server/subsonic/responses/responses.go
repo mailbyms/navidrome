@@ -56,6 +56,7 @@ type Subsonic struct {
 
 	JukeboxStatus   *JukeboxStatus   `xml:"jukeboxStatus,omitempty"                       json:"jukeboxStatus,omitempty"`
 	JukeboxPlaylist *JukeboxPlaylist `xml:"jukeboxPlaylist,omitempty"                     json:"jukeboxPlaylist,omitempty"`
+	SongComments    *SongComments    `xml:"songComments,omitempty"                        json:"songComments,omitempty"`
 
 	// OpenSubsonic extensions
 	OpenSubsonicExtensions *OpenSubsonicExtensions `xml:"openSubsonicExtensions,omitempty"  json:"openSubsonicExtensions,omitempty"`
@@ -528,6 +529,22 @@ type StructuredLyric struct {
 type StructuredLyrics []StructuredLyric
 type LyricsList struct {
 	StructuredLyrics []StructuredLyric `xml:"structuredLyrics,omitempty" json:"structuredLyrics,omitempty"`
+}
+
+type SongComments struct {
+	Comments     []SongComment `xml:"songComment,omitempty" json:"songComment,omitempty"`
+	Total        int           `xml:"total,attr,omitempty" json:"total,omitempty"`
+	CommentCount int           `xml:"commentCount,attr,omitempty" json:"commentCount,omitempty"`
+}
+
+type SongComment struct {
+	ID          string `xml:"id,attr" json:"id"`
+	User        string `xml:"user,attr" json:"user"`
+	AvatarURL   string `xml:"avatarUrl,attr,omitempty" json:"avatarUrl,omitempty"`
+	Content     string `xml:"content,attr" json:"content"`
+	Timestamp   int64  `xml:"timestamp,attr" json:"timestamp"`
+	LikedCount  int    `xml:"likedCount,attr,omitempty" json:"likedCount,omitempty"`
+	Liked       bool   `xml:"liked,attr,omitempty" json:"liked,omitempty"`
 }
 
 type OpenSubsonicExtension struct {

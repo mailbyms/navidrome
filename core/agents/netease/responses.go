@@ -262,3 +262,33 @@ type ArtistTopSongsResponse struct {
 	More  bool   `json:"more"`
 	Total int    `json:"total"`
 }
+
+// Comment represents a comment from Netease API
+type Comment struct {
+	CommentID     int64    `json:"commentId"`
+	Content       string   `json:"content"`
+	Time          int64    `json:"time"`
+	LikedCount    int      `json:"likedCount"`
+	Liked         bool     `json:"liked"`
+	ExpressionURL string   `json:"expressionUrl,omitempty"`
+	User          User     `json:"user"`
+	BeReplied     []Reply  `json:"beReplied,omitempty"`
+}
+
+// Reply represents a reply to a comment
+type Reply struct {
+	User    User   `json:"user"`
+	Content string `json:"content"`
+}
+
+// Comments response represents the response from comment endpoints
+type CommentsResponse struct {
+	BaseResponse
+	Comments     []Comment `json:"comments"`
+	HotComments  []Comment `json:"hotComments,omitempty"`
+	TopComments  []Comment `json:"topComments,omitempty"`
+	More         bool      `json:"more"`
+	MoreHot      bool      `json:"moreHot"`
+	Total        int       `json:"total"`
+	CommentCount int       `json:"commentCount"`
+}

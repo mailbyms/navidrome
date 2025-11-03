@@ -69,6 +69,20 @@ type ArtistTopSongsRetriever interface {
 	GetArtistTopSongs(ctx context.Context, id, artistName, mbid string, count int) ([]Song, error)
 }
 
+type SongCommentsRetriever interface {
+	GetSongComments(ctx context.Context, title, artist string, limit int, offset int) ([]SongComment, error)
+}
+
+type SongComment struct {
+	ID          string
+	User        string
+	AvatarURL   string
+	Content     string
+	Timestamp   int64
+	LikedCount  int
+	Liked       bool
+}
+
 var Map map[string]Constructor
 
 func Register(name string, init Constructor) {

@@ -135,6 +135,38 @@ func (c *client) artistTopSongs(ctx context.Context, artistID string, limit int)
 	return nil, agents.ErrNotFound
 }
 
+// Song comments - get comments for a song by song ID
+func (c *client) songComments(ctx context.Context, songID string, limit int, offset int) (*CommentsResponse, error) {
+	log.Trace(ctx, "Getting song comments from Netease", "songID", songID, "limit", limit, "offset", offset)
+
+	params := url.Values{}
+	params.Set("id", songID)
+	if limit > 0 {
+		params.Set("limit", strconv.Itoa(limit))
+	}
+	if offset > 0 {
+		params.Set("offset", strconv.Itoa(offset))
+	}
+	// Set time sort order (0:按推荐排序, 1:按热度排序, 2:按时间排序)
+	params.Set("sortType", "2")
+
+	resp, err := c.makeRequest(ctx, "/comment/music", params)
+	if err != nil {
+		return nil, err
+	}
+
+	var commentsResp CommentsResponse
+	if err := c.parseResponse(resp, &commentsResp); err != nil {
+		return nil, err
+	}
+
+	if commentsResp.Code != 200 {
+		return nil, fmt.Errorf("netease API error: code %d, message: %s", commentsResp.Code, commentsResp.Message)
+	}
+
+	return &commentsResp, nil
+}
+
 // Helper method to make HTTP requests to Netease API
 func (c *client) makeRequest(ctx context.Context, endpoint string, params url.Values) (*http.Response, error) {
 	reqURL := fmt.Sprintf("%s%s", neteaseAPIBaseURL, endpoint)

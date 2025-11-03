@@ -2,8 +2,11 @@ package netease
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -252,6 +255,72 @@ func (n *neteaseAgent) callArtistTopSongs(ctx context.Context, artistID string, 
 
 	// TODO: Implement artist top songs API call
 	return n.client.artistTopSongs(ctx, artistID, limit)
+}
+
+func (n *neteaseAgent) callSongComments(ctx context.Context, songID string, limit int, offset int) (*CommentsResponse, error) {
+	return n.client.songComments(ctx, songID, limit, offset)
+}
+
+// GetSongComments 实现SongCommentsRetriever接口
+// 通过歌曲标题和艺术家搜索并获取评论
+func (n *neteaseAgent) GetSongComments(ctx context.Context, title, artist string, limit int, offset int) ([]agents.SongComment, error) {
+	log.Debug(ctx, "Getting song comments from Netease", "title", title, "artist", artist)
+
+	// 首先搜索歌曲
+	keywords := title
+	if artist != "" {
+		keywords = artist + " " + title
+	}
+
+	params := url.Values{}
+	params.Set("keywords", keywords)
+	params.Set("type", SearchTypeSong)
+	params.Set("limit", strconv.Itoa(10))
+	params.Set("offset", strconv.Itoa(0))
+
+	resp, err := n.client.makeRequest(ctx, "/search", params)
+	if err != nil {
+		return nil, err
+	}
+
+	var searchResp SearchResponse
+	if err := json.NewDecoder(resp.Body).Decode(&searchResp); err != nil {
+		return nil, err
+	}
+	resp.Body.Close()
+
+	if searchResp.Code != 200 {
+		return nil, fmt.Errorf("netease API error: code %d", searchResp.Code)
+	}
+
+	if len(searchResp.Result.Songs) == 0 {
+		return nil, agents.ErrNotFound
+	}
+
+	// 使用找到的第一首歌的ID获取评论
+	songID := strconv.FormatInt(searchResp.Result.Songs[0].ID, 10)
+	log.Debug(ctx, "netease", "songID", songID)
+
+	commentsResp, err := n.client.songComments(ctx, songID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	// 转换为agents.SongComment格式
+	var result []agents.SongComment
+	for _, comment := range commentsResp.Comments {
+		result = append(result, agents.SongComment{
+			ID:          fmt.Sprintf("%d", comment.CommentID),
+			User:        comment.User.Nickname,
+			AvatarURL:   comment.User.AvatarURL,
+			Content:     comment.Content,
+			Timestamp:   comment.Time,
+			LikedCount:  comment.LikedCount,
+			Liked:       comment.Liked,
+		})
+	}
+
+	return result, nil
 }
 
 func init() {

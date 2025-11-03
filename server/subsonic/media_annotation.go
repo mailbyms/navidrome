@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/navidrome/navidrome/core/agents"
 	"github.com/navidrome/navidrome/core/scrobbler"
 	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
@@ -218,4 +219,88 @@ func (api *Router) scrobblerNowPlaying(ctx context.Context, trackId string) erro
 	log.Info(ctx, "Now Playing", "title", mf.Title, "artist", mf.Artist, "user", username, "player", player.Name)
 	err = api.scrobbler.NowPlaying(ctx, clientId, client, trackId)
 	return err
+}
+
+func (api *Router) GetSongComments(r *http.Request) (*responses.Subsonic, error) {
+	p := req.Params(r)
+	songID, err := p.String("id")
+	if err != nil {
+		return nil, err
+	}
+	limit, _ := p.Int("limit")
+	if limit == 0 {
+		limit = 20
+	}
+	offset, _ := p.Int("offset")
+
+	log.Debug(r, "Getting song comments", "id", songID, "limit", limit, "offset", offset)
+
+	// 首先获取歌曲信息，用于匹配网易云音乐的歌曲
+	mf, err := api.ds.MediaFile(r.Context()).Get(songID)
+	if err != nil {
+		log.Error(r, "Error getting song", "id", songID, err)
+		return nil, err
+	}
+	if mf == nil {
+		return nil, newError(responses.ErrorDataNotFound, "Song not found")
+	}
+
+	// 获取歌曲评论
+	comments, err := api.getSongComments(r.Context(), mf)
+	if err != nil {
+		log.Error(r, "Error getting song comments", "id", songID, err)
+		return nil, err
+	}
+
+	// 分页处理
+	start := offset
+	end := offset + limit
+	if start > len(comments) {
+		start = len(comments)
+	}
+	if end > len(comments) {
+		end = len(comments)
+	}
+
+	var pagedComments []responses.SongComment
+	if start < end {
+		pagedComments = comments[start:end]
+	}
+
+	response := newResponse()
+	response.SongComments = &responses.SongComments{
+		Comments:     pagedComments,
+		Total:        len(comments),
+		CommentCount: len(comments),
+	}
+
+	return response, nil
+}
+
+func (api *Router) getSongComments(ctx context.Context, mf *model.MediaFile) ([]responses.SongComment, error) {
+	// 获取agents实例
+	agentsInstance := agents.GetAgents(api.ds)
+
+	// 使用agents接口获取评论
+	comments, err := agentsInstance.GetSongComments(ctx, mf.Title, mf.Artist, 50, 0)
+	if err != nil {
+		log.Warn(ctx, "Failed to get comments from agents", "title", mf.Title, "artist", mf.Artist, err)
+		return nil, err
+	}
+
+	// 转换为Subsonic格式的评论
+	var result []responses.SongComment
+	for _, comment := range comments {
+		result = append(result, responses.SongComment{
+			ID:          comment.ID,
+			User:        comment.User,
+			AvatarURL:   comment.AvatarURL,
+			Content:     comment.Content,
+			Timestamp:   comment.Timestamp,
+			LikedCount:  comment.LikedCount,
+			Liked:       comment.Liked,
+		})
+	}
+
+	return result, nil
 }
