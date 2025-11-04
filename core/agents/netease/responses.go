@@ -284,11 +284,17 @@ type Reply struct {
 // Comments response represents the response from comment endpoints
 type CommentsResponse struct {
 	BaseResponse
+	Data CommentsData `json:"data"`
+}
+
+// CommentsData contains the actual comment data
+type CommentsData struct {
 	Comments     []Comment `json:"comments"`
 	HotComments  []Comment `json:"hotComments,omitempty"`
 	TopComments  []Comment `json:"topComments,omitempty"`
 	More         bool      `json:"more"`
-	MoreHot      bool      `json:"moreHot"`
+	MoreHot      bool      `json:"moreHot,omitempty"`
 	Total        int       `json:"total"`
-	CommentCount int       `json:"commentCount"`
+	CommentCount int       `json:"commentCount,omitempty"`
+	CommentsTitle string   `json:"commentsTitle,omitempty"`
 }

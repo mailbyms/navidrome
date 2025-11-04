@@ -233,7 +233,7 @@ func (a *Agents) GetAlbumInfo(ctx context.Context, name, artist, mbid string) (*
 	return nil, ErrNotFound
 }
 
-func (a *Agents) GetSongComments(ctx context.Context, title, artist string, limit int, offset int) ([]SongComment, error) {
+func (a *Agents) GetSongComments(ctx context.Context, title, artist string, pageSize int, pageNo int, sortType int) ([]SongComment, int, error) {
 	start := time.Now()
 	for _, ag := range a.agents {
 		if utils.IsCtxDone(ctx) {
@@ -243,14 +243,14 @@ func (a *Agents) GetSongComments(ctx context.Context, title, artist string, limi
 		if !ok {
 			continue
 		}
-		comments, err := agent.GetSongComments(ctx, title, artist, limit, offset)
+		comments, total, err := agent.GetSongComments(ctx, title, artist, pageSize, pageNo, sortType)
 		if len(comments) > 0 && err == nil {
 			log.Debug(ctx, "Got Song Comments", "agent", ag.AgentName(), "title", title, "artist", artist,
-				"commentsCount", len(comments), "elapsed", time.Since(start))
-			return comments, nil
+				"commentsCount", len(comments), "total", total, "pageSize", pageSize, "pageNo", pageNo, "sortType", sortType, "elapsed", time.Since(start))
+			return comments, total, nil
 		}
 	}
-	return nil, ErrNotFound
+	return nil, 0, ErrNotFound
 }
 
 var _ Interface = (*Agents)(nil)

@@ -227,13 +227,22 @@ func (api *Router) GetSongComments(r *http.Request) (*responses.Subsonic, error)
 	if err != nil {
 		return nil, err
 	}
-	limit, _ := p.Int("limit")
-	if limit == 0 {
-		limit = 20
-	}
-	offset, _ := p.Int("offset")
 
-	log.Debug(r, "Getting song comments", "id", songID, "limit", limit, "offset", offset)
+	// 使用新的分页参数格式
+	pageSize, _ := p.Int("pageSize")
+	if pageSize == 0 {
+		pageSize = 10
+	}
+	pageNo, _ := p.Int("pageNo")
+	if pageNo == 0 {
+		pageNo = 1
+	}
+	sortType, _ := p.Int("sortType")
+	if sortType == 0 {
+		sortType = 2
+	}
+
+	log.Debug(r, "Getting song comments", "id", songID, "pageSize", pageSize, "pageNo", pageNo)
 
 	// 首先获取歌曲信息，用于匹配网易云音乐的歌曲
 	mf, err := api.ds.MediaFile(r.Context()).Get(songID)
@@ -246,45 +255,26 @@ func (api *Router) GetSongComments(r *http.Request) (*responses.Subsonic, error)
 	}
 
 	// 获取歌曲评论
-	comments, err := api.getSongComments(r.Context(), mf)
+	songComments, err := api.getSongComments(r.Context(), r, mf, pageSize, pageNo, sortType)
 	if err != nil {
 		log.Error(r, "Error getting song comments", "id", songID, err)
 		return nil, err
 	}
 
-	// 分页处理
-	start := offset
-	end := offset + limit
-	if start > len(comments) {
-		start = len(comments)
-	}
-	if end > len(comments) {
-		end = len(comments)
-	}
-
-	var pagedComments []responses.SongComment
-	if start < end {
-		pagedComments = comments[start:end]
-	}
-
 	response := newResponse()
-	response.SongComments = &responses.SongComments{
-		Comments:     pagedComments,
-		Total:        len(comments),
-		CommentCount: len(comments),
-	}
+	response.SongComments = songComments
 
 	return response, nil
 }
 
-func (api *Router) getSongComments(ctx context.Context, mf *model.MediaFile) ([]responses.SongComment, error) {
+func (api *Router) getSongComments(ctx context.Context, r *http.Request, mf *model.MediaFile, pageSize int, pageNo int, sortType int) (*responses.SongComments, error) {
 	// 获取agents实例
 	agentsInstance := agents.GetAgents(api.ds)
 
-	// 使用agents接口获取评论
-	comments, err := agentsInstance.GetSongComments(ctx, mf.Title, mf.Artist, 50, 0)
+	// 使用agents接口获取评论，传入分页和排序参数
+	comments, total, err := agentsInstance.GetSongComments(ctx, mf.Title, mf.Artist, pageSize, pageNo, sortType)
 	if err != nil {
-		log.Warn(ctx, "Failed to get comments from agents", "title", mf.Title, "artist", mf.Artist, err)
+		log.Warn(ctx, "Failed to get comments from agents", "title", mf.Title, "artist", mf.Artist, "sortType", sortType, err)
 		return nil, err
 	}
 
@@ -302,5 +292,9 @@ func (api *Router) getSongComments(ctx context.Context, mf *model.MediaFile) ([]
 		})
 	}
 
-	return result, nil
+	return &responses.SongComments{
+		Comments:     result,
+		Total:        total,
+		CommentCount: total,
+	}, nil
 }

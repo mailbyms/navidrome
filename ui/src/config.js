@@ -35,6 +35,7 @@ const defaultConfig = {
   publicBaseUrl: '/share',
   separator: '/',
   enableInspect: true,
+  enableNeteaseComments: true,
 }
 
 let config

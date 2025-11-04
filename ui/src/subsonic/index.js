@@ -88,6 +88,16 @@ const streamUrl = (id, options) => {
   )
 }
 
+const getSongComments = (id, pageSize = 10, pageNo = 1, sortType = 2) => {
+  return httpClient(
+    url('getSongComments', id, {
+      pageSize,
+      pageNo,
+      sortType,
+    }),
+  )
+}
+
 export default {
   url,
   ping,
@@ -103,4 +113,5 @@ export default {
   streamUrl,
   getAlbumInfo,
   getArtistInfo,
+  getSongComments,
 }

@@ -5,6 +5,7 @@ import { useNotify, usePermissions, useTranslate } from 'react-admin'
 import { IconButton, Menu, MenuItem } from '@material-ui/core'
 import { makeStyles } from '@material-ui/core/styles'
 import MoreVertIcon from '@material-ui/icons/MoreVert'
+import ChatIcon from '@material-ui/icons/Chat'
 import { MdQuestionMark } from 'react-icons/md'
 import clsx from 'clsx'
 import {
@@ -46,12 +47,25 @@ const MoreButton = ({ record, onClick, info }) => {
   )
 }
 
+const CommentButton = ({ record, onClick }) => {
+  const handleClick = (e) => {
+    onClick(record)
+    e.stopPropagation()
+  }
+  return (
+    <IconButton onClick={handleClick} size={'small'} title="Comments">
+      <ChatIcon fontSize={'small'} />
+    </IconButton>
+  )
+}
+
 export const SongContextMenu = ({
   resource,
   record,
   showLove,
   onAddToPlaylist,
   className,
+  onComment,
 }) => {
   const classes = useStyles()
   const dispatch = useDispatch()
@@ -104,6 +118,11 @@ export const SongContextMenu = ({
       label: `${translate('ra.action.download')} (${formatBytes(record.size)})`,
       action: (record) =>
         dispatch(openDownloadMenu(record, DOWNLOAD_MENU_SONG)),
+    },
+    comment: {
+      enabled: !record.missing && config.enableNeteaseComments,
+      label: translate('resources.song.actions.comment'),
+      action: (record) => onComment && onComment(record),
     },
     info: {
       enabled: true,
@@ -165,6 +184,9 @@ export const SongContextMenu = ({
         resource={resource}
         visible={config.enableFavourites && showLove && present}
       />
+      {onComment && options.comment.enabled && (
+        <CommentButton record={record} onClick={onComment} />
+      )}
       <MoreButton record={record} onClick={handleClick} info={options.info} />
       <Menu
         id={'menu' + record.id}
@@ -190,10 +212,12 @@ SongContextMenu.propTypes = {
   record: PropTypes.object.isRequired,
   onAddToPlaylist: PropTypes.func,
   showLove: PropTypes.bool,
+  onComment: PropTypes.func,
 }
 
 SongContextMenu.defaultProps = {
   onAddToPlaylist: () => {},
+  onComment: null,
   record: {},
   resource: 'song',
   showLove: true,

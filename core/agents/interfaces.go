@@ -70,7 +70,7 @@ type ArtistTopSongsRetriever interface {
 }
 
 type SongCommentsRetriever interface {
-	GetSongComments(ctx context.Context, title, artist string, limit int, offset int) ([]SongComment, error)
+	GetSongComments(ctx context.Context, title, artist string, pageSize int, pageNo int, sortType int) ([]SongComment, int, error)
 }
 
 type SongComment struct {

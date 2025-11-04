@@ -136,21 +136,32 @@ func (c *client) artistTopSongs(ctx context.Context, artistID string, limit int)
 }
 
 // Song comments - get comments for a song by song ID
-func (c *client) songComments(ctx context.Context, songID string, limit int, offset int) (*CommentsResponse, error) {
-	log.Trace(ctx, "Getting song comments from Netease", "songID", songID, "limit", limit, "offset", offset)
+func (c *client) songComments(ctx context.Context, songID string, pageSize int, pageNo int, sortType int) (*CommentsResponse, error) {
+	log.Trace(ctx, "Getting song comments from Netease", "songID", songID, "pageSize", pageSize, "pageNo", pageNo, "sortType", sortType)
 
 	params := url.Values{}
 	params.Set("id", songID)
-	if limit > 0 {
-		params.Set("limit", strconv.Itoa(limit))
-	}
-	if offset > 0 {
-		params.Set("offset", strconv.Itoa(offset))
-	}
-	// Set time sort order (0:按推荐排序, 1:按热度排序, 2:按时间排序)
-	params.Set("sortType", "2")
+	params.Set("type", "0") // 0 for song comments
 
-	resp, err := c.makeRequest(ctx, "/comment/music", params)
+	// 网易新版评论接口参数
+	if pageSize > 0 {
+		params.Set("pageSize", strconv.Itoa(pageSize))
+	}
+
+	if pageNo > 0 {
+		params.Set("pageNo", strconv.Itoa(pageNo))
+	}
+
+	// 排序方式 (1:按推荐排序, 2:按热度排序, 3:按时间排序)
+	if sortType > 0 && sortType <= 3 {
+		params.Set("sortType", strconv.Itoa(sortType))
+	} else {
+		// 默认按热度排序
+		log.Trace(ctx, "set sortType to default value: 2")
+		params.Set("sortType", "2")
+	}
+
+	resp, err := c.makeRequest(ctx, "/comment/new", params)
 	if err != nil {
 		return nil, err
 	}
@@ -162,6 +173,11 @@ func (c *client) songComments(ctx context.Context, songID string, limit int, off
 
 	if commentsResp.Code != 200 {
 		return nil, fmt.Errorf("netease API error: code %d, message: %s", commentsResp.Code, commentsResp.Message)
+	}
+
+	// Ensure Total is set correctly if missing
+	if commentsResp.Data.Total == 0 && len(commentsResp.Data.Comments) > 0 {
+		commentsResp.Data.Total = len(commentsResp.Data.Comments)
 	}
 
 	return &commentsResp, nil

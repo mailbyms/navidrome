@@ -78,6 +78,42 @@ Here are some useful direct links:
 - [Development](https://www.navidrome.org/docs/developers/)
 - [Subsonic API Compatibility](https://www.navidrome.org/docs/developers/subsonic-api/)
 
+### API Reference: Get Song Comments
+
+Navidrome supports fetching song comments from NetEase Music with multiple sorting options.
+
+**Endpoint**: `GET /rest/getSongComments`
+
+**Parameters**:
+- `id`: Song ID (required)
+- `pageSize`: Number of comments per page (default: 10)
+- `pageNo`: Page number (default: 1)
+- `sortType`: Sorting method (default: 2)
+  - `1`: 按推荐排序 (Recommended)
+  - `2`: 按热度排序 (Hot)
+  - `3`: 按时间排序 (Time)
+
+**Response Example**:
+```json
+{
+  "subsonic-response": {
+    "status": "ok",
+    "songComments": {
+      "comments": [...],
+      "total": 100
+    }
+  }
+}
+```
+
+**Configuration**:
+- Enable NetEase agent in `navidrome.toml`:
+```toml
+[Agents]
+Enabled = "netease"
+```
+
+**Usage**: The comments feature is only available when the NetEase agent is enabled. Users can switch between different sorting methods via dropdown in the comments dialog.
 ## Screenshots
 
 <p align="left">

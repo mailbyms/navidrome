@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import {
   BulkActionsToolbar,
   FunctionField,
@@ -31,6 +31,7 @@ import {
 } from '../common'
 import config from '../config'
 import ExpandInfoDialog from '../dialogs/ExpandInfoDialog'
+import CommentsDialog from '../dialogs/CommentsDialog'
 import { removeAlbumCommentsFromSongs } from './utils.js'
 
 const useStyles = makeStyles(
@@ -93,7 +94,12 @@ const AlbumSongs = (props) => {
   const classes = useStyles({ isDesktop })
   const dispatch = useDispatch()
   const version = useVersion()
+  const [commentDialog, setCommentDialog] = useState({ open: false, record: null })
   useResourceRefresh('song', 'album')
+
+  const handleComment = (record) => {
+    setCommentDialog({ open: true, record })
+  }
 
   const toggleableFields = useMemo(() => {
     return {
@@ -177,6 +183,7 @@ const AlbumSongs = (props) => {
               source={'starred'}
               sortable={false}
               className={classes.contextMenu}
+              onComment={handleComment}
               label={
                 config.enableFavourites && (
                   <FavoriteBorderIcon
@@ -190,6 +197,11 @@ const AlbumSongs = (props) => {
         </Card>
       </div>
       <ExpandInfoDialog content={<SongInfo />} />
+      <CommentsDialog
+        open={commentDialog.open}
+        onClose={() => setCommentDialog({ open: false, record: null })}
+        record={commentDialog.record}
+      />
     </>
   )
 }

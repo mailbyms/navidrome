@@ -39,6 +39,16 @@ func serveIndex(ds model.DataStore, fs fs.FS, shareInfo *model.Share) http.Handl
 			http.NotFound(w, r)
 			return
 		}
+		// 检查是否启用了netease agent
+		agents := strings.Split(conf.Server.Agents, ",")
+		enableNeteaseComments := false
+		for _, agent := range agents {
+			if strings.TrimSpace(agent) == "netease" {
+				enableNeteaseComments = true
+				break
+			}
+		}
+
 		appConfig := map[string]interface{}{
 			"version":                   consts.Version,
 			"firstTime":                 firstTime,
@@ -71,6 +81,7 @@ func serveIndex(ds model.DataStore, fs fs.FS, shareInfo *model.Share) http.Handl
 			"defaultDownsamplingFormat": conf.Server.DefaultDownsamplingFormat,
 			"separator":                 string(os.PathSeparator),
 			"enableInspect":             conf.Server.Inspect.Enabled,
+			"enableNeteaseComments":     enableNeteaseComments,
 		}
 		if strings.HasPrefix(conf.Server.UILoginBackgroundURL, "/") {
 			appConfig["loginBackgroundURL"] = path.Join(conf.Server.BasePath, conf.Server.UILoginBackgroundURL)
