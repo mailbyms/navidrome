@@ -175,10 +175,6 @@ func (c *client) songComments(ctx context.Context, songID string, pageSize int, 
 		return nil, fmt.Errorf("netease API error: code %d, message: %s", commentsResp.Code, commentsResp.Message)
 	}
 
-	// Ensure Total is set correctly if missing
-	if commentsResp.Data.Total == 0 && len(commentsResp.Data.Comments) > 0 {
-		commentsResp.Data.Total = len(commentsResp.Data.Comments)
-	}
 
 	return &commentsResp, nil
 }

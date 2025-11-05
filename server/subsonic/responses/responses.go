@@ -533,7 +533,6 @@ type LyricsList struct {
 
 type SongComments struct {
 	Comments     []SongComment `xml:"songComment,omitempty" json:"songComment,omitempty"`
-	Total        int           `xml:"total,attr,omitempty" json:"total,omitempty"`
 	CommentCount int           `xml:"commentCount,attr,omitempty" json:"commentCount,omitempty"`
 }
 

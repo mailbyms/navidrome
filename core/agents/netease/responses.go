@@ -294,7 +294,6 @@ type CommentsData struct {
 	TopComments  []Comment `json:"topComments,omitempty"`
 	More         bool      `json:"more"`
 	MoreHot      bool      `json:"moreHot,omitempty"`
-	Total        int       `json:"total"`
 	CommentCount int       `json:"commentCount,omitempty"`
 	CommentsTitle string   `json:"commentsTitle,omitempty"`
 }

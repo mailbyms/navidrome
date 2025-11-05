@@ -259,7 +259,7 @@ func (n *neteaseAgent) callArtistTopSongs(ctx context.Context, artistID string, 
 
 // GetSongComments 实现SongCommentsRetriever接口
 // 通过歌曲标题和艺术家搜索并获取评论
-func (n *neteaseAgent) GetSongComments(ctx context.Context, title, artist string, pageSize int, pageNo int, sortType int) ([]agents.SongComment, int, error) {
+func (n *neteaseAgent) GetSongComments(ctx context.Context, title, artist string, pageSize int, pageNo int, sortType int) ([]agents.SongComment, error) {
 	log.Debug(ctx, "Getting song comments from Netease", "title", title, "artist", artist, "pageSize", pageSize, "pageNo", pageNo, "sortType", sortType)
 
 	// 首先搜索歌曲
@@ -276,21 +276,21 @@ func (n *neteaseAgent) GetSongComments(ctx context.Context, title, artist string
 
 	resp, err := n.client.makeRequest(ctx, "/search", params)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	var searchResp SearchResponse
 	if err := json.NewDecoder(resp.Body).Decode(&searchResp); err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 	resp.Body.Close()
 
 	if searchResp.Code != 200 {
-		return nil, 0, fmt.Errorf("netease API error: code %d", searchResp.Code)
+		return nil, fmt.Errorf("netease API error: code %d", searchResp.Code)
 	}
 
 	if len(searchResp.Result.Songs) == 0 {
-		return nil, 0, agents.ErrNotFound
+		return nil, agents.ErrNotFound
 	}
 
 	// 使用找到的第一首歌的ID获取评论
@@ -299,7 +299,7 @@ func (n *neteaseAgent) GetSongComments(ctx context.Context, title, artist string
 
 	commentsResp, err := n.client.songComments(ctx, songID, pageSize, pageNo, sortType)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	// 转换为agents.SongComment格式
@@ -316,7 +316,7 @@ func (n *neteaseAgent) GetSongComments(ctx context.Context, title, artist string
 		})
 	}
 
-	return result, commentsResp.Data.Total, nil
+	return result, nil
 }
 
 func init() {

@@ -272,7 +272,7 @@ func (api *Router) getSongComments(ctx context.Context, r *http.Request, mf *mod
 	agentsInstance := agents.GetAgents(api.ds)
 
 	// 使用agents接口获取评论，传入分页和排序参数
-	comments, total, err := agentsInstance.GetSongComments(ctx, mf.Title, mf.Artist, pageSize, pageNo, sortType)
+	comments, err := agentsInstance.GetSongComments(ctx, mf.Title, mf.Artist, pageSize, pageNo, sortType)
 	if err != nil {
 		log.Warn(ctx, "Failed to get comments from agents", "title", mf.Title, "artist", mf.Artist, "sortType", sortType, err)
 		return nil, err
@@ -294,7 +294,6 @@ func (api *Router) getSongComments(ctx context.Context, r *http.Request, mf *mod
 
 	return &responses.SongComments{
 		Comments:     result,
-		Total:        total,
-		CommentCount: total,
+		CommentCount: len(result),
 	}, nil
 }
