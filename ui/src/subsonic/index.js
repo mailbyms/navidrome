@@ -88,14 +88,19 @@ const streamUrl = (id, options) => {
   )
 }
 
-const getSongComments = (id, pageSize = 10, pageNo = 1, sortType = 2) => {
-  return httpClient(
-    url('getSongComments', id, {
-      pageSize,
-      pageNo,
-      sortType,
-    }),
-  )
+const getSongComments = (id, pageSize = 10, pageNo = 1, sortType = 2, cursor = null) => {
+  const params = {
+    pageSize,
+    pageNo,
+    sortType,
+  }
+
+  // 当sortType为3且pageNo大于1时，需要传递cursor参数
+  if (sortType === 3 && pageNo > 1 && cursor !== null) {
+    params.cursor = cursor
+  }
+
+  return httpClient(url('getSongComments', id, params))
 }
 
 export default {

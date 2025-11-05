@@ -259,8 +259,8 @@ func (n *neteaseAgent) callArtistTopSongs(ctx context.Context, artistID string, 
 
 // GetSongComments 实现SongCommentsRetriever接口
 // 通过歌曲标题和艺术家搜索并获取评论
-func (n *neteaseAgent) GetSongComments(ctx context.Context, title, artist string, pageSize int, pageNo int, sortType int) ([]agents.SongComment, error) {
-	log.Debug(ctx, "Getting song comments from Netease", "title", title, "artist", artist, "pageSize", pageSize, "pageNo", pageNo, "sortType", sortType)
+func (n *neteaseAgent) GetSongComments(ctx context.Context, title, artist string, pageSize int, pageNo int, sortType int, cursor string) ([]agents.SongComment, error) {
+	log.Debug(ctx, "Getting song comments from Netease", "title", title, "artist", artist, "pageSize", pageSize, "pageNo", pageNo, "sortType", sortType, "cursor", cursor)
 
 	// 首先搜索歌曲
 	keywords := title
@@ -297,7 +297,7 @@ func (n *neteaseAgent) GetSongComments(ctx context.Context, title, artist string
 	songID := strconv.FormatInt(searchResp.Result.Songs[0].ID, 10)
 	log.Debug(ctx, "netease", "songID", songID)
 
-	commentsResp, err := n.client.songComments(ctx, songID, pageSize, pageNo, sortType)
+	commentsResp, err := n.client.songComments(ctx, songID, pageSize, pageNo, sortType, cursor)
 	if err != nil {
 		return nil, err
 	}

@@ -136,8 +136,8 @@ func (c *client) artistTopSongs(ctx context.Context, artistID string, limit int)
 }
 
 // Song comments - get comments for a song by song ID
-func (c *client) songComments(ctx context.Context, songID string, pageSize int, pageNo int, sortType int) (*CommentsResponse, error) {
-	log.Trace(ctx, "Getting song comments from Netease", "songID", songID, "pageSize", pageSize, "pageNo", pageNo, "sortType", sortType)
+func (c *client) songComments(ctx context.Context, songID string, pageSize int, pageNo int, sortType int, cursor string) (*CommentsResponse, error) {
+	log.Trace(ctx, "Getting song comments from Netease", "songID", songID, "pageSize", pageSize, "pageNo", pageNo, "sortType", sortType, "cursor", cursor)
 
 	params := url.Values{}
 	params.Set("id", songID)
@@ -159,6 +159,12 @@ func (c *client) songComments(ctx context.Context, songID string, pageSize int, 
 		// 默认按热度排序
 		log.Trace(ctx, "set sortType to default value: 2")
 		params.Set("sortType", "2")
+	}
+
+	// 当sortType为3(按时间排序)且pageNo>1时，需要传递cursor参数
+	if sortType == 3 && pageNo > 1 && cursor != "" {
+		params.Set("cursor", cursor)
+		log.Trace(ctx, "设置cursor参数用于时间排序分页", "cursor", cursor)
 	}
 
 	resp, err := c.makeRequest(ctx, "/comment/new", params)

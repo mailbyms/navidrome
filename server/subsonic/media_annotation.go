@@ -242,7 +242,10 @@ func (api *Router) GetSongComments(r *http.Request) (*responses.Subsonic, error)
 		sortType = 2
 	}
 
-	log.Debug(r, "Getting song comments", "id", songID, "pageSize", pageSize, "pageNo", pageNo)
+	// 获取cursor参数，用于时间排序时的分页定位
+	cursor, _ := p.String("cursor")
+
+	log.Debug(r, "Getting song comments", "id", songID, "pageSize", pageSize, "pageNo", pageNo, "sortType", sortType, "cursor", cursor)
 
 	// 首先获取歌曲信息，用于匹配网易云音乐的歌曲
 	mf, err := api.ds.MediaFile(r.Context()).Get(songID)
@@ -255,7 +258,7 @@ func (api *Router) GetSongComments(r *http.Request) (*responses.Subsonic, error)
 	}
 
 	// 获取歌曲评论
-	songComments, err := api.getSongComments(r.Context(), r, mf, pageSize, pageNo, sortType)
+	songComments, err := api.getSongComments(r.Context(), r, mf, pageSize, pageNo, sortType, cursor)
 	if err != nil {
 		log.Error(r, "Error getting song comments", "id", songID, err)
 		return nil, err
@@ -267,12 +270,12 @@ func (api *Router) GetSongComments(r *http.Request) (*responses.Subsonic, error)
 	return response, nil
 }
 
-func (api *Router) getSongComments(ctx context.Context, r *http.Request, mf *model.MediaFile, pageSize int, pageNo int, sortType int) (*responses.SongComments, error) {
+func (api *Router) getSongComments(ctx context.Context, r *http.Request, mf *model.MediaFile, pageSize int, pageNo int, sortType int, cursor string) (*responses.SongComments, error) {
 	// 获取agents实例
 	agentsInstance := agents.GetAgents(api.ds)
 
 	// 使用agents接口获取评论，传入分页和排序参数
-	comments, err := agentsInstance.GetSongComments(ctx, mf.Title, mf.Artist, pageSize, pageNo, sortType)
+	comments, err := agentsInstance.GetSongComments(ctx, mf.Title, mf.Artist, pageSize, pageNo, sortType, cursor)
 	if err != nil {
 		log.Warn(ctx, "Failed to get comments from agents", "title", mf.Title, "artist", mf.Artist, "sortType", sortType, err)
 		return nil, err

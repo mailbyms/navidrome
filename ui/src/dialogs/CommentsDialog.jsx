@@ -151,12 +151,20 @@ const CommentsDialog = ({ open, onClose, record }) => {
     const actualSortType = currentSortType !== null ? currentSortType : sortType
 
     try {
+      // 计算cursor参数：当sortType为3且newPage大于1时，需要传递上一页最后一条评论的时间戳
+      let cursor = null
+      if (actualSortType === 3 && newPage > 1 && comments.length > 0) {
+        // 获取上一页最后一条评论的时间戳
+        cursor = comments[comments.length - 1].timestamp
+      }
+
       // 使用新的分页和排序参数格式
       const response = await subsonic.getSongComments(
         record.mediaFileId || record.id,
         commentsPerPage,
         newPage,
-        actualSortType
+        actualSortType,
+        cursor
       )
       console.log('CommentsDialog - response:', response) // 打印response的值
 
