@@ -26,9 +26,28 @@ import (
 
 func requestLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		scheme := "http"
-		if r.TLS != nil {
-			scheme = "https"
+		// 优先使用转发的协议信息
+		scheme := r.Header.Get(xForwardedProto)
+		if scheme == "" {
+			scheme = r.Header.Get(xForwardedScheme)
+		}
+		if scheme == "" {
+			scheme = "http"
+			if r.TLS != nil {
+				scheme = "https"
+			}
+		}
+
+		// 使用可能包含端口的主机信息
+		host := r.Header.Get(xForwardedHost)
+		if host == "" {
+			host = r.Host
+		}
+
+		// 检查是否需要添加端口
+		forwardedPort := r.Header.Get("X-Forwarded-Port")
+		if forwardedPort != "" && !strings.Contains(host, ":") {
+			host = host + ":" + forwardedPort
 		}
 
 		start := time.Now()
@@ -36,7 +55,7 @@ func requestLogger(next http.Handler) http.Handler {
 		next.ServeHTTP(ww, r)
 		status := ww.Status()
 
-		message := fmt.Sprintf("HTTP: %s %s://%s%s", r.Method, scheme, r.Host, r.RequestURI)
+		message := fmt.Sprintf("HTTP: %s %s://%s%s", r.Method, scheme, host, r.RequestURI)
 		logArgs := []interface{}{
 			r.Context(),
 			message,
